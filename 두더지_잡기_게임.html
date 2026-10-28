@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>두더지 잡기 챌린지</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#eaf0f6;font-family:system-ui,-apple-system,'Malgun Gothic',sans-serif;display:flex;justify-content:center;align-items:center;padding:20px}.game{width:min(100%,480px);background:linear-gradient(145deg,#11243f,#162f45);color:#fff;border-radius:24px;padding:26px;box-shadow:0 18px 60px #10253e33;text-align:center}h1{margin:6px 0;font-size:26px}.sub{color:#b8cee0;font-size:14px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}.stat{background:#ffffff13;border:1px solid #ffffff20;border-radius:14px;padding:12px 5px}.stat small{display:block;color:#b8cee0;font-size:12px}.stat strong{font-size:29px;font-variant-numeric:tabular-nums}.board{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;max-width:370px;margin:auto}.hole{border:0;border-radius:18px;aspect-ratio:1;background:#294d62;box-shadow:inset 0 9px 15px #081b2b9c;display:grid;place-items:center;cursor:pointer;overflow:hidden;touch-action:manipulation}.hole:focus-visible{outline:3px solid #ffdd75;outline-offset:2px}.face{font-size:clamp(38px,12vw,66px);transform:translateY(120%);transition:transform .13s;pointer-events:none;user-select:none}.hole.up{background:#34765e}.hole.up .face{transform:translateY(0)}.hole.hit{background:#e9a744}.meter{height:8px;background:#ffffff21;border-radius:99px;overflow:hidden;margin-top:20px}.meter span{display:block;width:100%;height:100%;background:#facc55;transition:width .2s linear}.status{min-height:24px;color:#e4f1fa;margin:18px 0 12px;font-weight:600}.start{width:100%;max-width:370px;border:0;border-radius:14px;background:#facc55;color:#35260b;padding:15px;font-size:17px;font-weight:800;cursor:pointer}.start:disabled{opacity:.7;cursor:default}.tip{font-size:12px;color:#b8cee0;margin:18px 0 0}@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="game"><div style="font-size:35px">🔨 🐹 🌟</div><h1>두더지 잡기 챌린지</h1><p class="sub">두더지 +10점 · 황금 두더지 +30점</p><div class="stats"><div class="stat"><small>현재 점수</small><strong id="score">0</strong></div><div class="stat"><small>남은 시간</small><strong id="time">30</strong><small>초</small></div><div class="stat"><small>최고 기록</small><strong id="best">0</strong></div></div><div class="board" id="board"></div><div class="meter"><span id="meter"></span></div><div class="status" id="status" aria-live="polite">준비됐나요? 최고 기록에 도전하세요!</div><button class="start" id="start">▶ 게임 시작</button><p class="tip">💡 시간이 지날수록 두더지가 빨라집니다!</p></main>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s),board=$('#board'),scoreEl=$('#score'),timeEl=$('#time'),bestEl=$('#best'),meter=$('#meter'),status=$('#status'),start=$('#start');
+const holes=Array.from({length:9},(_,i)=>{let b=document.createElement('button');b.className='hole';b.setAttribute('aria-label',(i+1)+'번 구멍');b.innerHTML='<span class="face">🐹</span>';board.appendChild(b);return b});
+let score=0,best=0,remaining=30,running=false,active=-1,gold=false,spawnTimer,hideTimer,tickTimer,last=-1;
+try{best=Number(localStorage.getItem('mole-best')||0)||0}catch(e){}bestEl.textContent=best;
+function clearTimers(){clearTimeout(spawnTimer);clearTimeout(hideTimer);clearInterval(tickTimer)}
+function hide(){if(active>=0){holes[active].classList.remove('up','hit');active=-1}}
+function spawn(){if(!running)return;hide();let i=Math.floor(Math.random()*9);if(i===last)i=(i+1+Math.floor(Math.random()*8))%9;last=i;active=i;gold=Math.random()<.18;holes[i].querySelector('.face').textContent=gold?'🌟':'🐹';holes[i].classList.add('up');const speed=Math.max(360,950-(30-remaining)*19);hideTimer=setTimeout(()=>{hide();spawnTimer=setTimeout(spawn,Math.max(100,speed*.22))},speed)}
+function end(){running=false;clearTimers();hide();start.disabled=false;start.textContent='↻ 다시 도전하기';meter.style.width='0%';if(score>best){best=score;bestEl.textContent=best;try{localStorage.setItem('mole-best',String(best))}catch(e){}status.textContent='🏆 신기록 달성! '+score+'점!'}else status.textContent=score>=200?'🎉 대단해요! '+score+'점 달성!':'⏰ 게임 종료! 최종 '+score+'점'}
+holes.forEach((h,i)=>h.addEventListener('click',()=>{if(!running||i!==active||!h.classList.contains('up'))return;score+=gold?30:10;scoreEl.textContent=score;h.classList.add('hit');clearTimeout(hideTimer);hide();clearTimeout(spawnTimer);spawnTimer=setTimeout(spawn,110)}));
+start.addEventListener('click',()=>{clearTimers();running=true;score=0;remaining=30;last=-1;hide();scoreEl.textContent='0';timeEl.textContent='30';meter.style.width='100%';status.textContent='🔨 두더지를 클릭해서 잡으세요!';start.disabled=true;start.textContent='게임 진행 중...';spawnTimer=setTimeout(spawn,350);tickTimer=setInterval(()=>{if(!running)return;remaining--;timeEl.textContent=remaining;meter.style.width=(remaining/30*100)+'%';if(remaining<=0)end()},1000)});
+})();
+</script>
+</body></html>
